@@ -64,6 +64,7 @@ public final class TheSieuToc extends JavaPlugin {
         console("§b /_/ /_/ /_/\\___/   /____/_/\\___/\\__._/    /_/  \\____/\\___/");
         console("               §f| §bVersion: §6" + pluginVersion + " §f| §bAuthor: §6LXC §f|");
         console("            §f| §aCopyright (c) 2018-" + ArtxeTime.getCurrentYear() + " §bTheSieuToc §f|");
+        console("                         §cBug fixed by quanphungg_");
         instance = this;
         queue = new HashMap<>();
     }

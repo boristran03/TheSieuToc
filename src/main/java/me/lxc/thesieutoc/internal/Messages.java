@@ -44,7 +44,7 @@ public class Messages extends IConfiguration {
         serial = getString("Serial", "§aBạn đã nhập serial: §f\"{Serial}\"");
         pin = getString("Pin", "§aBạn đã nhập mã thẻ §f\"{Pin}\"");
         handling = getString("Handling", "§eĐang xử lý, vui lòng đợi...");
-        awaitingApproval = getString("Awaiting-Approval", "&eThẻ của bạn hiện đang chờ duyệt...");
+        awaitingApproval = getString("Awaiting-Approval", "§eThẻ của bạn hiện đang chờ duyệt...");
         cancelled = getString("Cancelled", "§eĐã hủy nạp thẻ");
         invalidCardType = getString("Invalid-Card-Type", "§cLoại thẻ không hợp lệ");
         success = getString("Success", "§aNạp thẻ thành công với mệnh giá {amount}₫");

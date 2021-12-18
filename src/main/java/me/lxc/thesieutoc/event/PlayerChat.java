@@ -8,12 +8,13 @@ import me.lxc.thesieutoc.internal.Ui;
 import me.lxc.thesieutoc.tasks.CardCheckTask;
 import net.thesieutoc.TheSieuTocAPI;
 import net.thesieutoc.data.CardInfo;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,8 @@ import static me.lxc.thesieutoc.handlers.InputCardHandler.*;
 
 public class PlayerChat implements Listener {
 
-    @EventHandler
-    public void event(AsyncPlayerChatEvent e) {
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onChat(AsyncPlayerChatEvent e) {
         final String text = ChatColor.stripColor(e.getMessage());
         final Settings settings = TheSieuToc.getInstance().getSettings();
         final Messages msg = TheSieuToc.getInstance().getMessages();
@@ -61,21 +62,18 @@ public class PlayerChat implements Listener {
                 String transactionID = sendCard.get("transaction_id").getAsString();
                 CardInfo tstInfo = new CardInfo(transactionID, info.type, info.amount, info.serial, info.pin);
 
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (CardCheckTask.checkOne(player, tstInfo, null)) {
-                            List<CardInfo> queue = TheSieuToc.getInstance().queue.get(player);
-                            if (queue == null) {
-                                queue = new ArrayList<>();
-                            }
-                            queue.add(tstInfo);
-                            if (TheSieuToc.getInstance().queue.containsKey(player))
-                                TheSieuToc.getInstance().queue.replace(player, queue);
-                            else TheSieuToc.getInstance().queue.put(player, queue);
+                Bukkit.getScheduler().runTaskLaterAsynchronously(TheSieuToc.getInstance(), () -> {
+                    if (CardCheckTask.getInstance().checkOne(player, tstInfo, null)) {
+                        List<CardInfo> queue = TheSieuToc.getInstance().queue.get(player);
+                        if (queue == null) {
+                            queue = new ArrayList<>();
                         }
+                        queue.add(tstInfo);
+                        if (TheSieuToc.getInstance().queue.containsKey(player))
+                            TheSieuToc.getInstance().queue.replace(player, queue);
+                        else TheSieuToc.getInstance().queue.put(player, queue);
                     }
-                }.runTaskLaterAsynchronously(TheSieuToc.getInstance(), 20L);
+                }, 20L);
             } else {
                 unTriggerStep2(player);
                 purgePlayer(player);

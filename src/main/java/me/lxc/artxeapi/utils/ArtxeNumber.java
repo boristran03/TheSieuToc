@@ -4,11 +4,11 @@ public class ArtxeNumber {
 
     private ArtxeNumber() {}
 
-    public static boolean isInteger(Object o){
+    public static boolean isInteger(String o) {
         try {
-            Integer.parseInt(o.toString());
+            Integer.parseInt(o);
             return true;
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             return false;
         }
     }

@@ -11,7 +11,7 @@ public class IConfiguration {
 
     public IConfiguration(ArtxeYAML yaml){
         this.yaml = yaml;
-        this.configVersion = yaml.getConfig().get("Config-Version").toString();
+        this.configVersion = yaml.getConfig().getString("Config-Version");
         load();
     }
 

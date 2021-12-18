@@ -1,17 +1,20 @@
 package me.lxc.thesieutoc.internal;
 
+import com.google.gson.Gson;
 import me.lxc.thesieutoc.TheSieuToc;
 import me.lxc.thesieutoc.handlers.InputCardHandler;
-import org.json.simple.JSONObject;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DornorLogElement {
+
     private final Date date;
     private final String playerName;
     private final InputCardHandler.LocalCardInfo cardInfo;
@@ -50,22 +53,10 @@ public class DornorLogElement {
         return notes;
     }
 
-    public String toString() {
-        JSONObject json = new JSONObject();
-        Map<String, Object> data = new HashMap<>();
-        data.put("DATE", date.getTime());
-        data.put("PLAYER", playerName);
-        data.put("CARD", cardInfo.type + " | " + cardInfo.amount + " | " + cardInfo.serial + " | " + cardInfo.pin);
-        data.put("SUCCESS", success);
-        data.put("NOTES", notes);
-        json.putAll(data);
-        return json.toJSONString();
-    }
-
     public static DornorLogElement parse(String line) {
         String[] data = line.split("[|]");
         SimpleDateFormat parser = new SimpleDateFormat("HH:mm:ss dd/MM/yyyy");
-        Date date = null;
+        Date date;
         try {
             date = parser.parse(data[0]);
         } catch (ParseException e) {
@@ -83,6 +74,17 @@ public class DornorLogElement {
         return new DornorLogElement(date, playerName, card, success, notes);
     }
 
+    public String toString() {
+        Gson gson = new Gson();
+        DonorObject object = new DonorObject();
+        object.DATE = date.getTime();
+        object.PLAYER = playerName;
+        object.SUCCESS = success;
+        object.CARD = cardInfo.type + " | " + cardInfo.amount + " | " + cardInfo.serial + " | " + cardInfo.pin;
+        object.NOTES = notes;
+        return gson.toJson(object);
+    }
+
     public static List<DornorLogElement> loadFromFile(File file) {
         List<DornorLogElement> logContent = Collections.emptyList();
         try (final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
@@ -93,3 +95,5 @@ public class DornorLogElement {
         return logContent;
     }
 }
+
+

@@ -15,11 +15,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class CardCheckTask extends BukkitRunnable {
 
+    private static final TheSieuToc main = TheSieuToc.getInstance();
+    private static CardCheckTask __instance;
+
     public CardCheckTask(TheSieuToc instance) {
+        __instance = this;
         this.runTaskTimer(instance, 0L, instance.getSettings().cardCheckPeriod);
     }
 
@@ -28,27 +31,24 @@ public class CardCheckTask extends BukkitRunnable {
         checkAll();
     }
 
-    public static void checkAll() {
-        new BukkitRunnable(){
-            @Override
-            public void run() {
-                if (TheSieuToc.getInstance().queue.size() == 0) return;
-                TheSieuToc.pluginDebug.debug("Checking in progress...");
-                for(Map.Entry<Player, List<CardInfo>> playerCards : TheSieuToc.getInstance().queue.entrySet()){
-                    Player player = playerCards.getKey();
-                    List<CardInfo> cards = playerCards.getValue();
-                    List<CardInfo> removeQueue = new ArrayList<>();
-                    for(CardInfo card : cards){
-                        checkOne(player, card, removeQueue);
-                    }
-                    cards.removeAll(removeQueue);
-                    TheSieuToc.getInstance().queue.replace(player, cards);
-                }
-            }
-        }.runTaskAsynchronously(TheSieuToc.getInstance());
+    public static CardCheckTask getInstance() {
+        return __instance;
     }
 
-    public static boolean checkOne(final Player player, final CardInfo card, List<CardInfo> removeQueue) {
+    public void checkAll() {
+        Bukkit.getScheduler().runTaskAsynchronously(main, () -> {
+            if (TheSieuToc.getInstance().queue.size() == 0) return;
+            TheSieuToc.pluginDebug.debug("Checking in progress...");
+            TheSieuToc.getInstance().queue.forEach((player, cards) -> {
+                List<CardInfo> removeQueue = new ArrayList<>();
+                cards.forEach((card) -> checkOne(player, card, removeQueue));
+                cards.removeAll(removeQueue);
+                TheSieuToc.getInstance().queue.replace(player, cards);
+            });
+        });
+    }
+
+    public boolean checkOne(final Player player, final CardInfo card, List<CardInfo> removeQueue) {
         final Messages messages = TheSieuToc.getInstance().getMessages();
         String notes;
         JsonObject checkCard = TheSieuTocAPI.checkCard(TheSieuToc.getInstance().getSettings().iTheSieuTocKey, TheSieuToc.getInstance().getSettings().iTheSieuTocSecret, card.transactionID);
@@ -81,7 +81,7 @@ public class CardCheckTask extends BukkitRunnable {
         }
     }
 
-    private static void successAction(Player player, int amount) {
+    private void successAction(Player player, int amount) {
         List<String> commands = TheSieuToc.getInstance().getSettings().yaml().getConfig().getStringList("Card-Reward." + amount);
         Plugin papi = Bukkit.getPluginManager().getPlugin("PlaceHolderAPI");
         boolean papiEnabled = false;
