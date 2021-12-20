@@ -2,6 +2,17 @@ name: TheSieuToc
 version: ${project.version}
 main: me.lxc.thesieutoc.TheSieuToc
 prefix: TheSieuToc
-authors: [LXC]
+authors: [ LXC ]
 description: Plugin nạp thẻ thông qua API của thesieutoc.net
 website: https://thesieutoc.net
+
+commands:
+  napthepe:
+    usage: /<command>
+  napthe:
+    usage: /<command>
+    aliases:
+      - donate
+      - tst
+      - nap_the
+      - thesieutoc

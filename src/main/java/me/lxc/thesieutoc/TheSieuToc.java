@@ -8,18 +8,15 @@ import me.lxc.thesieutoc.internal.*;
 import me.lxc.thesieutoc.tasks.CardCheckTask;
 import net.thesieutoc.data.CardInfo;
 import org.bukkit.Bukkit;
-import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
 
 import static me.lxc.artxeapi.utils.ArtxeChat.console;
 
@@ -95,15 +92,8 @@ public final class TheSieuToc extends JavaPlugin {
     }
 
     private void registerCommands() {
-        try {
-            final Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-            field.setAccessible(true);
-            CommandMap commandMap = (CommandMap) field.get(Bukkit.getServer());
-            commandMap.register(CMD, new Commands(CMD, CMD_DESCRIPTION, CMD_USAGE, CMD_ALIASES));
-            getLogger().log(Level.INFO, "Commands has been registered");
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            getLogger().log(Level.SEVERE, "Could not register command!", e);
-        }
+        getCommand("napthe").setExecutor(new Commands());
+        getCommand("napthepe").setExecutor(new PEDonateCommand());
     }
 
     private void registerListeners() {

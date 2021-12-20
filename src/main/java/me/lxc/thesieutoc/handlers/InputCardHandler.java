@@ -8,14 +8,15 @@ import java.util.HashMap;
 import java.util.List;
 
 public class InputCardHandler {
-    private static List<Player> inputStepOne = new ArrayList<>();
-    private static List<Player> inputStepTwo = new ArrayList<>();
-    private static HashMap<Player, LocalCardInfo> cards = new HashMap<>();
+    private static final List<Player> inputStepOne = new ArrayList<>();
+    private static final List<Player> inputStepTwo = new ArrayList<>();
+    private static final HashMap<Player, LocalCardInfo> cards = new HashMap<>();
 
-    private InputCardHandler() {}
+    private InputCardHandler() {
+    }
 
     public static void triggerStepOne(Player player, String type, int amount) {
-        if(!stepOne(player) && !cards.containsKey(player)) {
+        if (!stepOne(player) && !cards.containsKey(player)) {
             player.sendMessage(TheSieuToc.getInstance().getMessages().inputSerial);
             inputStepOne.add(player);
             cards.put(player, new LocalCardInfo(type, amount, "", ""));
@@ -63,11 +64,21 @@ public class InputCardHandler {
         public String serial;
         public String pin;
 
-        public LocalCardInfo(String type, int amount, String serial, String pin){
+        public LocalCardInfo(String type, int amount, String serial, String pin) {
             this.type = type;
             this.amount = amount;
             this.serial = serial;
             this.pin = pin;
+        }
+
+        @Override
+        public String toString() {
+            return "LocalCardInfo{" +
+                    "type='" + type + '\'' +
+                    ", amount=" + amount +
+                    ", serial='" + serial + '\'' +
+                    ", pin='" + pin + '\'' +
+                    '}';
         }
     }
 }

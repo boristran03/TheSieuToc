@@ -9,20 +9,16 @@ import me.lxc.thesieutoc.utils.JsonMessage;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Commands extends BukkitCommand {
-
-    public Commands(String name, String description, String usageMessage, List<String> aliases) {
-        super(name, description, usageMessage, aliases);
-    }
+public class Commands implements CommandExecutor {
 
     private static final List<String> TT = Arrays.asList("TOTAL", "DAY", "MONTH", "YEAR");
 
@@ -164,8 +160,29 @@ public class Commands extends BukkitCommand {
         }
     }
 
+    private void chooseAmount(Player player, String type, Ui ui) {
+        for (int amount : TheSieuToc.getInstance().getSettings().amountList) {
+            String text = ui.cardAmountText.replaceAll("(?ium)[{]Card_Amount[}]", String.valueOf(amount));
+            String hover = splitListToLine(ui.cardAmountHover).replaceAll("(?ium)[{]Card_Amount[}]", String.valueOf(amount));
+            String executeCommand = "/donate choose " + type + " " + amount;
+            new JsonMessage().append(text).setHoverAsTooltip(hover).setClickAsExecuteCmd(executeCommand).save().send(player);
+        }
+    }
+
+    private String splitListToLine(List<String> list) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            String line = list.get(i);
+            sb.append(ChatColor.translateAlternateColorCodes('&', line));
+            if (i < list.size() - 1) {
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
     @Override
-    public boolean execute(CommandSender sender, String commandLabel, String[] arg) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] arg) {
         final Messages msg = TheSieuToc.getInstance().getMessages();
         final Ui ui = TheSieuToc.getInstance().getUi();
         final boolean isPlayer = sender instanceof Player;
@@ -256,11 +273,11 @@ public class Commands extends BukkitCommand {
                             sender.sendMessage(msg.invalidCardType);
                             return false;
                         }
-                        if (!ArtxeNumber.isInteger(arg[2])) {
-                            sender.sendMessage(msg.notNumber.replaceAll("(?ium)[{]0[}]", arg[2]));
+                        if (!ArtxeNumber.isInteger(arg2)) {
+                            sender.sendMessage(msg.notNumber.replaceAll("(?ium)[{]0[}]", arg2));
                             return false;
                         }
-                        InputCardHandler.triggerStepOne(player, arg[1], Integer.parseInt(arg[2]));
+                        InputCardHandler.triggerStepOne(player, arg[1], Integer.parseInt(arg2));
                         return true;
                     case "reload":
                         return reload(sender, arg.length, msg);
@@ -285,31 +302,4 @@ public class Commands extends BukkitCommand {
                 return false;
         }
     }
-
-    private void chooseAmount(Player player, String type, Ui ui) {
-        for (int amount : TheSieuToc.getInstance().getSettings().amountList) {
-            String text = ui.cardAmountText.replaceAll("(?ium)[{]Card_Amount[}]", String.valueOf(amount));
-            String hover = splitListToLine(ui.cardAmountHover).replaceAll("(?ium)[{]Card_Amount[}]", String.valueOf(amount));
-            String executeCommand = "/donate choose " + type + " " + amount;
-            new JsonMessage().append(text).setHoverAsTooltip(hover).setClickAsExecuteCmd(executeCommand).save().send(player);
-        }
-    }
-
-    private String splitListToLine(List<String> list) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            String line = list.get(i);
-            sb.append(ChatColor.translateAlternateColorCodes('&', line));
-            if (i < list.size() - 1) {
-                sb.append("\n");
-            }
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, String[] args) throws IllegalArgumentException {
-        return new ArrayList<>();
-    }
-
 }
