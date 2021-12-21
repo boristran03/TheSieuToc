@@ -45,24 +45,16 @@ public class CalculateTop {
         if (Strings.isNullOrEmpty(type) || type.equalsIgnoreCase(TOTAL)) {
             top = getSuccess(log);
         } else {
-            String format;
-            switch (type.toLowerCase()) {
-                case "month":
-                    format = MONTH;
-                    break;
-                case "day":
-                    format = DAY;
-                    break;
-                case "year":
-                default:
-                    format = YEAR;
-                    break;
-            }
+            String format = switch (type.toLowerCase()) {
+                case "month" -> MONTH;
+                case "day" -> DAY;
+                default -> YEAR;
+            };
             final SimpleDateFormat dateFormat = new SimpleDateFormat(format);
             final String now = dateFormat.format(new Date());
             final List<DornorLogElement> matchDate = log.stream()
-                .filter(dornor -> dateFormat.format(dornor.getDate()).contains(now))
-                .collect(Collectors.toList());
+                    .filter(dornor -> dateFormat.format(dornor.getDate()).contains(now))
+                    .collect(Collectors.toList());
             top = getSuccess(matchDate);
         }
         top = sort(top);
@@ -130,6 +122,5 @@ public class CalculateTop {
         if (top.containsKey(name) && sender instanceof Player) {
             sender.sendMessage(yourTop);
         }
-
     }
 }

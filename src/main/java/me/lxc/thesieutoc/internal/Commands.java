@@ -13,6 +13,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -23,7 +24,8 @@ public class Commands implements CommandExecutor {
     private static final List<String> TT = Arrays.asList("TOTAL", "DAY", "MONTH", "YEAR");
 
     static boolean isValidCard(String type) {
-        return TheSieuToc.getInstance().getSettings().cardEnable.stream().anyMatch(type::equalsIgnoreCase);
+        return TheSieuToc.getInstance().getSettings().cardEnable
+                .stream().anyMatch(type::equalsIgnoreCase);
     }
 
     private boolean clearCache(CommandSender sender, Messages msg) {
@@ -53,23 +55,14 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    static boolean isValidAmount(int a) {
-        for (int amount : TheSieuToc.getInstance().getSettings().amountList) {
-            if (amount == a) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean give(CommandSender sender, String[] args, Messages msg) {
         if (sender.hasPermission("napthe.admin.give")) {
             switch (args.length) {
-                case 1:
-                case 2:
+                case 1, 2 -> {
                     sender.sendMessage(msg.tooFewArgs);
                     return false;
-                case 3:
+                }
+                case 3 -> {
                     String args_2 = args[2].replaceAll("\\.", "");
                     if (ArtxeNumber.isInteger(args_2)) {
                         String playerName = args[1];
@@ -81,7 +74,8 @@ public class Commands implements CommandExecutor {
                         return false;
                     }
                     return true;
-                default:
+                }
+                default -> {
                     String argsDF_2 = args[2].replaceAll("\\.", "");
                     if (ArtxeNumber.isInteger(argsDF_2)) {
                         String playerName = args[1];
@@ -93,6 +87,7 @@ public class Commands implements CommandExecutor {
                         sender.sendMessage(msg.notNumber.replaceAll("(?ium)[{]0[}]", argsDF_2));
                         return false;
                     }
+                }
             }
         } else {
             sender.sendMessage(msg.noPermission);
@@ -120,30 +115,26 @@ public class Commands implements CommandExecutor {
         Messages msg = TheSieuToc.getInstance().getMessages();
         Bukkit.getScheduler().runTaskAsynchronously(TheSieuToc.getInstance(), () -> {
             switch (args.length) {
-                case 1:
-                    CalculateTop.printTop(sender, CalculateTop.execute("total"), 10);
-                    break;
-                case 2:
+                case 1 -> CalculateTop.printTop(sender, CalculateTop.execute("total"), 10);
+                case 2 -> {
                     if (ArtxeNumber.isInteger(args[1])) {
                         CalculateTop.printTop(sender, CalculateTop.execute("total"), Integer.parseInt(args[1]));
                     } else {
                         sender.sendMessage(msg.notNumber.replaceAll("(?ium)[{]0[}]", args[1]));
                     }
-                    break;
-                case 3:
+                }
+                case 3 -> {
                     if (!ArtxeNumber.isInteger(args[1])) {
                         sender.sendMessage(msg.notNumber.replaceAll("(?ium)[{]0[}]", args[1]));
                         break;
                     }
-
                     if (TT.stream().noneMatch(args[2]::equalsIgnoreCase)) {
                         sender.sendMessage(msg.invalidCommand);
                         break;
                     }
                     CalculateTop.printTop(sender, CalculateTop.execute(args[2]), Integer.parseInt(args[1]));
-                    break;
-                default:
-                    sender.sendMessage(msg.tooManyArgs);
+                }
+                default -> sender.sendMessage(msg.tooManyArgs);
             }
         });
         return true;
@@ -191,75 +182,93 @@ public class Commands implements CommandExecutor {
 
         switch (arg.length) {
             case 0:
+                FloodgateApi api = FloodgateApi.getInstance();
+                if (isPlayer) {
+                    if (api.isFloodgatePlayer(((Player) sender).getUniqueId())) {
+                        sender.sendMessage("§cBạn đang sử dụng phiên bản PE, vui lòng nạp thẻ bằng lệnh §e§n/napthepe");
+                        return true;
+                    }
+                }
                 chooseCard(sender, isPlayer, hasAPIInfo, ui, msg);
                 return true;
             case 1:
                 switch (arg[0].toLowerCase()) {
-                    case "give":
+                    case "give" -> {
                         return give(sender, arg, msg);
-                    case "clear-cache":
+                    }
+                    case "clear-cache" -> {
                         return clearCache(sender, msg);
-                    case "reload":
+                    }
+                    case "reload" -> {
                         return reload(sender, arg.length, msg);
-                    case "choose":
+                    }
+                    case "choose" -> {
                         chooseCard(sender, isPlayer, hasAPIInfo, ui, msg);
                         return true;
-                    case "check":
+                    }
+                    case "check" -> {
                         if (hasAPIInfo) {
                             return check(sender, arg.length, msg);
                         } else {
                             sender.sendMessage(msg.missingApiInfo);
                             return false;
                         }
-                    case "top":
+                    }
+                    case "top" -> {
                         return top(sender, arg);
-                    default:
+                    }
+                    default -> {
                         sender.sendMessage(msg.invalidCommand);
                         return false;
+                    }
                 }
             case 2:
                 switch (arg[0].toLowerCase()) {
-                    case "give":
+                    case "give" -> {
                         return give(sender, arg, msg);
-                    case "choose":
-                        if (hasAPIInfo) {
-                            if (isPlayer) {
-                                if (isValidCard(arg[1])) {
-                                    String type = arg[1];
-                                    chooseAmount(player, type, ui);
-                                    return true;
-                                } else {
-                                    sender.sendMessage(msg.invalidCardType);
-                                    return false;
-                                }
-                            } else {
-                                sender.sendMessage(msg.onlyPlayer);
-                                return false;
-                            }
-                        } else {
+                    }
+                    case "choose" -> {
+                        if (!hasAPIInfo) {
                             sender.sendMessage(msg.missingApiInfo);
                             return false;
                         }
-                    case "reload":
+                        if (!isPlayer) {
+                            sender.sendMessage(msg.onlyPlayer);
+                            return false;
+                        }
+                        if (isValidCard(arg[1])) {
+                            String type = arg[1];
+                            chooseAmount(player, type, ui);
+                            return true;
+                        }
+                        sender.sendMessage(msg.invalidCardType);
+                        return false;
+                    }
+                    case "reload" -> {
                         return reload(sender, arg.length, msg);
-                    case "check":
+                    }
+                    case "check" -> {
                         if (hasAPIInfo) {
                             return check(sender, arg.length, msg);
                         } else {
                             sender.sendMessage(msg.missingApiInfo);
                             return false;
                         }
-                    case "top":
+                    }
+                    case "top" -> {
                         return top(sender, arg);
-                    default:
+                    }
+                    default -> {
                         sender.sendMessage(msg.invalidCommand);
                         return false;
+                    }
                 }
             case 3:
                 switch (arg[0].toLowerCase()) {
-                    case "give":
+                    case "give" -> {
                         return give(sender, arg, msg);
-                    case "choose":
+                    }
+                    case "choose" -> {
                         String arg2 = StringUtils.replace(arg[2], ".", "");
                         if (!hasAPIInfo) {
                             sender.sendMessage(msg.missingApiInfo);
@@ -277,22 +286,28 @@ public class Commands implements CommandExecutor {
                             sender.sendMessage(msg.notNumber.replaceAll("(?ium)[{]0[}]", arg2));
                             return false;
                         }
+                        player.sendMessage("§aNếu bạn muốn thoát, hãy chat §e'cancel' §ađể hủy");
                         InputCardHandler.triggerStepOne(player, arg[1], Integer.parseInt(arg2));
                         return true;
-                    case "reload":
+                    }
+                    case "reload" -> {
                         return reload(sender, arg.length, msg);
-                    case "check":
+                    }
+                    case "check" -> {
                         if (hasAPIInfo) {
                             return check(sender, arg.length, msg);
                         } else {
                             sender.sendMessage(msg.missingApiInfo);
                             return false;
                         }
-                    case "top":
+                    }
+                    case "top" -> {
                         return top(sender, arg);
-                    default:
+                    }
+                    default -> {
                         sender.sendMessage(msg.invalidCommand);
                         return false;
+                    }
                 }
             default:
                 if ("give".equals(arg[0].toLowerCase())) {

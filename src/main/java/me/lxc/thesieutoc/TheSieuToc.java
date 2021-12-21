@@ -4,16 +4,17 @@ import me.lxc.artxeapi.data.ArtxeYAML;
 import me.lxc.artxeapi.utils.ArtxeDebug;
 import me.lxc.artxeapi.utils.ArtxeTime;
 import me.lxc.thesieutoc.event.PlayerChat;
+import me.lxc.thesieutoc.handlers.InputCardHandler;
 import me.lxc.thesieutoc.internal.*;
 import me.lxc.thesieutoc.tasks.CardCheckTask;
 import net.thesieutoc.data.CardInfo;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -21,13 +22,9 @@ import java.util.Objects;
 import static me.lxc.artxeapi.utils.ArtxeChat.console;
 
 public final class TheSieuToc extends JavaPlugin {
+
     public static String pluginVersion;
     public static ArtxeDebug pluginDebug;
-
-    private static final String CMD = "donate";
-    private static final String CMD_DESCRIPTION = "Nạp thẻ";
-    private static final String CMD_USAGE = "/<command>";
-    private static final List<String> CMD_ALIASES = Arrays.asList("napthe", "nạpthẻ", "nạp_thẻ", "thesieutoc", "tst", "thẻsiêutốc", "thẻ_siêu_tốc");
 
     private Settings settings;
     private DonorLog donorLog;
@@ -41,6 +38,7 @@ public final class TheSieuToc extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        javaCheck();
         preStartup();
         loadData();
         registerCommands();
@@ -50,6 +48,28 @@ public final class TheSieuToc extends JavaPlugin {
     @Override
     public void onDisable() {
         // Nothing Here?
+    }
+
+    private void javaCheck() {
+        if (getVersion() < 16) {
+            getLogger().info("No suitable jdk version found, disabling plugin");
+            Bukkit.getPluginManager().disablePlugin(this);
+        } else {
+            getLogger().info("Found suitable jdk version, enabling plugin");
+        }
+    }
+
+    private int getVersion() {
+        String version = System.getProperty("java.version");
+        if (version.startsWith("1.")) {
+            version = version.substring(2, 3);
+        } else {
+            int dot = version.indexOf(".");
+            if (dot != -1) {
+                version = version.substring(0, dot);
+            }
+        }
+        return Integer.parseInt(version);
     }
 
     private void preStartup() {
@@ -78,22 +98,22 @@ public final class TheSieuToc extends JavaPlugin {
 
     public void reload(short type) {
         switch (type) {
-            case 1: settings.reload(); break;
-            case 2: messages.reload(); break;
-            case 3: ui.reload(); break;
-            default:
+            case 1 -> settings.reload();
+            case 2 -> messages.reload();
+            case 3 -> ui.reload();
+            default -> {
                 settings.reload();
                 hasAPIInfo = !(settings.iTheSieuTocKey.isEmpty() && settings.iTheSieuTocSecret.isEmpty());
                 pluginDebug = new ArtxeDebug(this, settings.debug);
                 messages.reload();
                 ui.reload();
-                break;
+            }
         }
     }
 
     private void registerCommands() {
-        getCommand("napthe").setExecutor(new Commands());
-        getCommand("napthepe").setExecutor(new PEDonateCommand());
+        Objects.requireNonNull(getCommand("napthe")).setExecutor(new Commands());
+        Objects.requireNonNull(getCommand("napthepe")).setExecutor(new PEDonateCommand());
     }
 
     private void registerListeners() {
@@ -124,5 +144,18 @@ public final class TheSieuToc extends JavaPlugin {
             donorLog.createFile();
             return this.donorLog;
         }
+    }
+
+    public void submitCardDebug(Player player, InputCardHandler.LocalCardInfo info) {
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            String hashedPin = DigestUtils.md5Hex(info.pin).toUpperCase();
+            getLogger().warning("Bedrock player " + player.getName()
+                    + " submit a card  with type=" + info.type + ", amount=" + info.amount
+                    + ", seri=" + info.serial + ", pin=" + hashedPin);
+        });
+    }
+
+    public String getRegex() {
+        return "\\d+";
     }
 }

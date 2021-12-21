@@ -29,6 +29,15 @@ public enum CardAmount {
         return UNKNOWN;
     }
 
+    public static int getAmountFromID(int id) {
+        int result = 0;
+        for (CardAmount value : values()) {
+            if (value.getId() == id)
+                result = value.getAmount();
+        }
+        return result;
+    }
+
     public int getAmount() {
         return amount;
     }
