@@ -24,16 +24,15 @@ public class TheSieuTocAPI {
     private static final String CARD_CHARGING= "card_charging_api/check-status.html";
 
     public static JsonObject sendCard(String apiKey, String apiSecret, String cardType, int cardAmount, String serial, String pin) {
-        final String url = MessageFormat.format(
-                "{0}/{1}?APIkey={2}&APIsecret={3}&mathe={4}&seri={5}&type={6}&menhgia={7}",
-                API_SERVER, TRANSACTION, apiKey, apiSecret, pin, serial, cardType, CardAmount.getAmount(cardAmount).getId());
+        String pattern = "{0}/{1}?APIkey={2}&APIsecret={3}&mathe={4}&seri={5}&type={6}&menhgia={7}";
+        final String url = MessageFormat.format(pattern, API_SERVER, TRANSACTION, apiKey, apiSecret, pin, serial, cardType, CardAmount.getAmount(cardAmount).getId());
         pluginDebug.debug("Send card URL: " + url);
         return sendRequest(url);
     }
 
     public static JsonObject checkCard(String apiKey, String apiSecret, String transactionID) {
-        final String url = MessageFormat.format("{0}/{1}?APIkey={2}&APIsecret={3}&transaction_id={4}",
-                API_SERVER, CARD_CHARGING, apiKey, apiSecret, transactionID);
+        String pattern = "{0}/{1}?APIkey={2}&APIsecret={3}&transaction_id={4}";
+        final String url = MessageFormat.format(pattern, API_SERVER, CARD_CHARGING, apiKey, apiSecret, transactionID);
         pluginDebug.debug("Check card URL: " + url);
         return sendRequest(url);
     }
@@ -47,7 +46,7 @@ public class TheSieuTocAPI {
             connection.setDoInput(true);
             final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             final String response = reader.lines().collect(Collectors.joining());
-            return new JsonParser().parse(response).getAsJsonObject();
+            return JsonParser.parseString(response).getAsJsonObject();
         } catch (SocketTimeoutException e) {
             TheSieuToc.getInstance().getLogger().log(Level.SEVERE, "Read timed out, may API server go down");
             TheSieuToc.getInstance().getLogger().log(Level.SEVERE, "Check your self: " + url);

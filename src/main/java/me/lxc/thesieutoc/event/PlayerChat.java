@@ -35,7 +35,7 @@ public class PlayerChat implements Listener {
         final String text = ChatColor.stripColor(e.getMessage());
         if (stepOne(player) && !stepTwo(player)) {
             e.setCancelled(true);
-            if (ui.cancel.stream().noneMatch(text::equalsIgnoreCase) || !text.matches(regex)) {
+            if (ui.cancel.stream().noneMatch(text::equalsIgnoreCase) && text.matches(main.getRegex())) {
                 player.sendMessage(msg.serial.replaceAll("(?ium)[{]Serial[}]", text));
                 unTriggerStep1(player);
                 triggerStepTwo(player, text);
@@ -49,7 +49,7 @@ public class PlayerChat implements Listener {
 
         if (!stepOne(player) && stepTwo(player)) {
             e.setCancelled(true);
-            if (ui.cancel.stream().noneMatch(text::equalsIgnoreCase) || !text.matches(regex)) {
+            if (ui.cancel.stream().noneMatch(text::equalsIgnoreCase) && text.matches(regex)) {
                 LocalCardInfo info = lastStep(player, text);
                 unTriggerStep2(player);
                 player.sendMessage(msg.pin.replaceAll("(?ium)[{]Pin[}]", text));
@@ -57,6 +57,10 @@ public class PlayerChat implements Listener {
                 JsonObject sendCard = TheSieuTocAPI.sendCard(settings.iTheSieuTocKey, settings.iTheSieuTocSecret, info.type, info.amount, info.serial, info.pin);
                 TheSieuToc.pluginDebug.debug("Response: " + (sendCard != null ? sendCard.toString() : "NULL"));
                 assert sendCard != null;
+                if (!sendCard.get("status").getAsString().equals("2")) {
+                    player.sendMessage(sendCard.get("msg").getAsString());
+                    return;
+                }
                 if (!sendCard.get("status").getAsString().equals("00")) {
                     player.sendMessage(msg.fail);
                     player.sendMessage(sendCard.get("msg").getAsString());

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static me.lxc.thesieutoc.handlers.InputCardHandler.LocalCardInfo;
 
@@ -38,8 +37,7 @@ public class PEDonateCommand implements CommandExecutor {
         List<String> types = main.getSettings().cardEnable;
         List<Integer> amounts = main.getSettings().amountList;
         String[] cardType = Arrays.copyOf(types.toArray(), types.size(), String[].class);
-        List<String> strings = amounts.stream().map(Object::toString)
-                .collect(Collectors.toUnmodifiableList());
+        List<String> strings = amounts.stream().map(Object::toString).toList();
         String[] cardAmount = Arrays.copyOf(strings.toArray(), strings.size(), String[].class);
         FormBuilder form = CustomForm.builder()
                 .title("Nạp Thẻ")
@@ -90,9 +88,7 @@ public class PEDonateCommand implements CommandExecutor {
         Bukkit.getScheduler().runTaskLaterAsynchronously(TheSieuToc.getInstance(), () -> {
             if (CardCheckTask.getInstance().checkOne(player, tstInfo, null)) {
                 List<CardInfo> queue = TheSieuToc.getInstance().queue.get(player);
-                if (queue == null) {
-                    queue = new ArrayList<>();
-                }
+                if (queue == null) queue = new ArrayList<>();
                 queue.add(tstInfo);
                 if (TheSieuToc.getInstance().queue.containsKey(player))
                     TheSieuToc.getInstance().queue.replace(player, queue);

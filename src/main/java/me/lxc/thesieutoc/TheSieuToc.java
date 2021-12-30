@@ -10,16 +10,16 @@ import me.lxc.thesieutoc.tasks.CardCheckTask;
 import net.thesieutoc.data.CardInfo;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
-import static me.lxc.artxeapi.utils.ArtxeChat.console;
 
 public final class TheSieuToc extends JavaPlugin {
 
@@ -35,6 +35,7 @@ public final class TheSieuToc extends JavaPlugin {
     public boolean hasAPIInfo;
     public CardCheckTask cardCheckTask;
     private static TheSieuToc instance;
+    private boolean floodgateFound = false;
 
     @Override
     public void onEnable() {
@@ -72,6 +73,10 @@ public final class TheSieuToc extends JavaPlugin {
         return Integer.parseInt(version);
     }
 
+    public void console(String text){
+        Bukkit.getServer().getConsoleSender().sendMessage(text);
+    }
+
     private void preStartup() {
         pluginVersion = getDescription().getVersion();
         console("§b  ________            _____ _               ______");
@@ -81,7 +86,7 @@ public final class TheSieuToc extends JavaPlugin {
         console("§b /_/ /_/ /_/\\___/   /____/_/\\___/\\__._/    /_/  \\____/\\___/");
         console("               §f| §bVersion: §6" + pluginVersion + " §f| §bAuthor: §6LXC §f|");
         console("            §f| §aCopyright (c) 2018-" + ArtxeTime.getCurrentYear() + " §bTheSieuToc §f|");
-        console("                         §cBug fixed by quanphungg_");
+        console("                   §cBug fixed by quanphungg_");
         instance = this;
         queue = new HashMap<>();
     }
@@ -112,8 +117,17 @@ public final class TheSieuToc extends JavaPlugin {
     }
 
     private void registerCommands() {
-        Objects.requireNonNull(getCommand("napthe")).setExecutor(new Commands());
-        Objects.requireNonNull(getCommand("napthepe")).setExecutor(new PEDonateCommand());
+        PluginCommand napTheCommand = getCommand("napthe");
+        if(napTheCommand != null) napTheCommand.setExecutor(new Commands());
+        PluginCommand napThePE = getCommand("napthepe");
+        if (napThePE != null && settings.floodgateHook) {
+            getLogger().warning("Floodgate support is enabled, searching floodgate plugin...");
+            if (Bukkit.getPluginManager().getPlugin("floodgate") != null) {
+                napThePE.setExecutor(new PEDonateCommand());
+                this.floodgateFound = true;
+                getLogger().warning("Floodgate found, command '/napthepe' has been registered");
+            }
+        }
     }
 
     private void registerListeners() {
@@ -129,6 +143,10 @@ public final class TheSieuToc extends JavaPlugin {
         return this.settings;
     }
 
+    public boolean isFloodgateFound() {
+        return floodgateFound;
+    }
+
     public Messages getMessages() {
         return this.messages;
     }
@@ -138,18 +156,20 @@ public final class TheSieuToc extends JavaPlugin {
     }
 
     public DonorLog getDonorLog() {
-        if (donorLog.logFile != null && Objects.requireNonNull(donorLog.logFile).exists())
-            return this.donorLog;
-        else {
-            donorLog.createFile();
-            return this.donorLog;
+        if (!donorLog.logFile.exists()) {
+            try {
+                donorLog.logFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+         return this.donorLog;
     }
 
     public void submitCardDebug(Player player, InputCardHandler.LocalCardInfo info) {
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             String hashedPin = DigestUtils.md5Hex(info.pin).toUpperCase();
-            getLogger().warning("Bedrock player " + player.getName()
+            getLogger().warning("Player " + player.getName()
                     + " submit a card  with type=" + info.type + ", amount=" + info.amount
                     + ", seri=" + info.serial + ", pin=" + hashedPin);
         });
